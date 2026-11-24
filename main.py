@@ -6,8 +6,12 @@ from rich.console import Console
 from rich.text import Text
 from rich.align import Align
 from textwrap import dedent
+from rich.table import Table
+import platform
 
 console = Console()
+system_table = Table()
+resource_table = Table()
 
 layout = Layout()
 layout.split_column(
@@ -51,12 +55,47 @@ layout["left"].split_column(
     Layout(name="network", ratio=2)
 )
 
+# SYSTEM
+
+system_table.add_column("PROPERTY", style="bold cyan")
+system_table.add_column("VALUE", style="white")
+
+system_table.add_row("HOSTNAME", platform.node())
+system_table.add_row("OPERATING SYSTEM", platform.system())
+system_table.add_row("PROCESSOR", cpu)
+system_table.add_row("ARCHITECTURE", arch)
+system_table.add_row("LOGICAL PROCESSORS", str(count))
+
+# RESOURCE MONITOR
+
+resource_table.add_column("METRIC", style="bold cyan")
+resource_table.add_column("USAGE", style="white")
+resource_table.add_column("STATUS", style="bold green")
+
+resource_table.add_row(
+    "CPU",
+    f"{psutil.cpu_percent(interval=0.5):.1f}%",
+    "NORMAL"
+)
+
+resource_table.add_row(
+    "RAM USAGE",
+    f"{get_ram_usage():.1f}%",
+    "NORMAL"
+)
+
+resource_table.add_row(
+    "DISK USAGE",
+    f"{get_disk_usage():.1f}%",
+    "NORMAL"
+)
+
 layout["system_info"].update(
-    Panel("System Information", title="SYSTEM"),
+    Panel(system_table, title="SYSTEM")
 )
 
 layout["resource_monitor"].update(
-    Panel("Resource Monitor", title="RESOURCE MONITOR")
+    Panel(resource_table, title="RESOURCE MONITOR")
 )
 
 layout["network"].update(
@@ -82,5 +121,7 @@ layout["footer"].update(
         border_style="cyan"
     )
 )
+
+
 
 console.print(layout)
