@@ -89,7 +89,7 @@ def build_layout(download_speed, upload_speed, current_stats):
 
     right_column = Group(
         Panel("System Health", title="SYSTEM HEALTH"),
-        Panel("Top Processes", title="TOP PROCESSES")
+        Panel(get_process_table(), title="TOP PROCESSES")
     )
 
     if console.size.width >= 120:
@@ -165,6 +165,29 @@ def format_bytes(bytes_value):
         bytes_value /= 1024
 
     return f"{bytes_value:.2f} PB"
+
+def get_process_table():
+    process_table = Table()
+    process_table.add_column("PID", style="dim white")
+    process_table.add_column("PROCESS", style="bold cyan")
+    process_table.add_column("RAM %", style="bold green")
+
+    processes = []
+    for process in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent"]):
+        processes.append(process.info)
+
+    def get_memory(process):
+        return process["memory_percent"]
+    
+    top_processes = sorted(processes, key=get_memory, reverse=True)[:5]
+    for process in top_processes:
+        process_table.add_row(
+            str(process["pid"]),
+            process["name"],
+            f'{process["memory_percent"]:.2f}%'
+        )
+    return process_table
+
 
 
 # SYSTEM
