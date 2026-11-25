@@ -54,9 +54,9 @@ def get_status_style(status):
 def get_resource_table():
     resource_table = Table(expand=True)
 
-    resource_table.add_column("METRIC", style="bold cyan")
-    resource_table.add_column("USAGE", style="white")
-    resource_table.add_column("STATUS")
+    resource_table.add_column("METRIC", style="bold cyan", width=18, no_wrap=True)
+    resource_table.add_column("USAGE", style="white", width=10, justify="right", no_wrap=True)
+    resource_table.add_column("STATUS", width=12, no_wrap=True)
 
     cpu_usage = psutil.cpu_percent(interval=None)
     ram_usage = get_ram_usage()
@@ -167,25 +167,33 @@ def format_bytes(bytes_value):
     return f"{bytes_value:.2f} PB"
 
 def get_process_table():
-    process_table = Table()
-    process_table.add_column("PID", style="dim white")
-    process_table.add_column("PROCESS", style="bold cyan")
-    process_table.add_column("RAM %", style="bold green")
-
+    process_table = Table(expand=True)
+    process_table.add_column("PID", style="dim white", width=8, no_wrap=True)
+    process_table.add_column("PROCESS", style="bold cyan", width=25, no_wrap=True, overflow="ellipsis")
+    process_table.add_column("RAM %", style="bold green", width=10, justify="right", no_wrap=True)
+    process_table.add_column("CPU %", style="purple", width=10, justify="right", no_wrap=True)
     processes = []
-    for process in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent"]):
-        processes.append(process.info)
 
-    def get_memory(process):
-        return process["memory_percent"]
+    for process in psutil.process_iter(["pid", "name", "memory_percent"]):
+        cpu_usage = process.cpu_percent()
+        processes.append((process, cpu_usage))
+
+    def get_cpu_usage(process):
+        return process[1]
+
+    top_processes = sorted(
+        processes,
+        key=get_cpu_usage,
+        reverse=True
+        )[:5]
     
-    top_processes = sorted(processes, key=get_memory, reverse=True)[:5]
-    for process in top_processes:
+    for process, cpu_usage in top_processes:
         process_table.add_row(
-            str(process["pid"]),
-            process["name"],
-            f'{process["memory_percent"]:.2f}%'
-        )
+            str(process.info["pid"]),
+            process.info["name"],
+            f'{process.info["memory_percent"]:.2f}%',
+            f"{cpu_usage:.1f}%"
+            )
     return process_table
 
 
