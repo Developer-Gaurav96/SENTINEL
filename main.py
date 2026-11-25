@@ -357,7 +357,7 @@ try:
         build_layout(download_speed, upload_speed),
         console=console,
         refresh_per_second=4,
-        screen=False,
+        screen=True,
         vertical_overflow="ellipsis"
     ) as live:
 
