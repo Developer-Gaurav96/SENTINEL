@@ -88,7 +88,7 @@ def build_layout(download_speed, upload_speed, current_stats):
     )
 
     right_column = Group(
-        Panel("System Health", title="SYSTEM HEALTH"),
+        Panel(get_system_health_table(), title="SYSTEM HEALTH"),
         Panel(get_process_table(), title="TOP PROCESSES")
     )
 
@@ -185,7 +185,7 @@ def get_process_table():
         processes,
         key=get_cpu_usage,
         reverse=True
-        )[:5]
+        )[:12]
     
     for process, cpu_usage in top_processes:
         process_table.add_row(
@@ -196,6 +196,27 @@ def get_process_table():
             )
     return process_table
 
+def get_system_uptime():
+    uptime = time() - psutil.boot_time()
+
+    days, remainder = divmod(uptime, 86400)
+    hours, remainder = divmod(remainder, 3600)
+    minutes, seconds = divmod(remainder, 60)
+
+    return f"{int(days)}d {int(hours)}h {int(minutes)}m {int(seconds)}s"
+
+def get_system_health_table():
+    health_table = Table(expand=True)
+
+    health_table.add_column("METRIC", style="bold cyan")
+    health_table.add_column("VALUE", style="white")
+
+    health_table.add_row("UPTIME", get_system_uptime())
+    health_table.add_row("TOTAL PROCESSES", str(len(psutil.pids())))
+    health_table.add_row("AVAILABLE RAM", format_bytes(psutil.virtual_memory().available))
+    health_table.add_row("CPU CORES", str(psutil.cpu_count(logical=False)))
+
+    return health_table
 
 
 # SYSTEM
@@ -217,6 +238,8 @@ download_speed = 0
 upload_speed = 0
 
 current_stats = previous_stats
+
+
 
 try:
     with Live(
